@@ -1,0 +1,12 @@
+{
+    "bn": {
+        "ws_url": "https://testnet.binancefuture.com",
+        "method": {
+            "position_information": "/fapi/v3/positionRisk"
+        }
+    },
+    "bn_credentials": {
+        "api_key": "tSYeFTSfqIq3XnuvwxnHft4e1VBX6qzQixuGpzKawiqH6YIzputgO2pToaGcbo8A",
+        "secret_key": "tSYeFTSfqIq3XnuvwxnHft4e1VBX6qzQixuGpzKawiqH6YIzputgO2pToaGcbo8A"
+    }
+}
