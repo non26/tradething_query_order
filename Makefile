@@ -3,3 +3,4 @@ run-echo:
 
 go-zip:
 	bash generate-function.sh
+	bash generate-function-cron-job.sh

@@ -21,6 +21,8 @@ func init() {
 	if err != nil {
 		fmt.Println("error read config", err)
 		panic(err)
+	} else {
+		fmt.Println("config load success ", _config.Bn.BaseURL)
 	}
 	app_echo := echo.New()
 	route.UpdateAWSAppConfig(app_echo, _config)

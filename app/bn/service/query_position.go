@@ -16,11 +16,13 @@ import (
 func (s *service) QueryOrder(ctx context.Context, request *servicerequest.QueryOrder) (handlerresponse.QueryOrderResponse, error) {
 	bnPositions, err := s.bnService.QueryPositionV3(ctx, request.ToBnServiceRequest())
 	if err != nil {
+		fmt.Println("error query position", err)
 		return handlerresponse.QueryOrderResponse{}, err
 	}
 
 	dbPositions, err := s.repository.GetAllOpenOrders(ctx)
 	if err != nil {
+		fmt.Println("error get all open orders", err)
 		return handlerresponse.QueryOrderResponse{}, err
 	}
 	if bnPositions != nil {
