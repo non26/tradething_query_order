@@ -2,11 +2,11 @@ module tradethingqueryorder
 
 go 1.23.2
 
-replace github.com/non26/tradepkg => ../tradepkg
+// replace github.com/non26/tradepkg => ../tradepkg
 
 require (
 	github.com/gin-gonic/gin v1.10.0
-	github.com/non26/tradepkg v0.1.15
+	github.com/non26/tradepkg v0.1.17
 	github.com/spf13/viper v1.19.0
 )
 
