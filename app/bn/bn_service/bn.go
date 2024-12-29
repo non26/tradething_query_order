@@ -2,15 +2,17 @@ package bnservice
 
 import (
 	"context"
-	bnrequest "tradethingqueryorder/app/bn/bn_request"
-	bnresponse "tradethingqueryorder/app/bn/bn_response"
+	bntradereq "tradethingqueryorder/app/bn/bn_request"
+	bntraderes "tradethingqueryorder/app/bn/bn_response"
 
 	bnclient "github.com/non26/tradepkg/pkg/bn/binance_client"
 	bntransport "github.com/non26/tradepkg/pkg/bn/binance_transport"
 )
 
 type IBinanceFutureTradeService interface {
-	QueryPositionV3(ctx context.Context, request *bnrequest.PositionInformationRequest) (bnresponse.PositionsInFormationResponse, error)
+	// return map[string]*bntraderes.PositionInformation
+	// where key is symbol + positionSide
+	QueryPositionV3(ctx context.Context, request *bntradereq.PositionInformationRequest) (map[string]*bntraderes.PositionInformation, error)
 }
 
 type binanceFutureTradeService struct {

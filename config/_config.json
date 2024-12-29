@@ -1,0 +1,18 @@
+{
+    "bn": {
+        "base_url": "https://testnet.binancefuture.com",
+        "end_point": {
+            "position_information": "/fapi/v3/positionRisk"
+        }
+    },
+    "bn_credentials": {
+        "api_key": "79c5d0858edfd09a166f5a1c69ad876518174fa72af071a16c2ca21bd50e4c1d",
+        "secret_key": "c921a243ffa6b57dca1db29959d8e2cc0d1828cf3f3848d94a5533de45c2ce1d"
+    },
+    "dynamodb": {
+        "region": "ap-southeast-1",
+        "ak": "w66e3f",
+        "sk": "4238kj",
+        "endpoint": "http://localhost:8000"
+    }
+}

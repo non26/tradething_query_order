@@ -1,7 +1,15 @@
 package bnresponse
 
-type PositionsInFormationResponse struct {
-	Positions []PositionInformation
+import dynamodbmodels "github.com/non26/tradepkg/pkg/bn/dynamodb_repository/models"
+
+// type PositionsInFormationResponse struct {
+// 	Positions []PositionInformation
+// }
+
+type PositionsInFormationResponse []PositionInformation
+
+func (p *PositionsInFormationResponse) IsFound() bool {
+	return len(*p) > 0
 }
 
 type PositionInformation struct {
@@ -25,4 +33,14 @@ type PositionInformation struct {
 	BidNotional            string `json:"bidNotional"`
 	AskNotional            string `json:"askNotional"`
 	UpdateTime             int64  `json:"updateTime"`
+}
+
+func (p *PositionInformation) ToOpenPositionDynamodb(clientId string, side string) *dynamodbmodels.BnFtOpeningPosition {
+	return &dynamodbmodels.BnFtOpeningPosition{
+		Symbol:       p.Symbol,
+		PositionSide: p.PositionSide,
+		AmountQ:      p.PositionAmt,
+		ClientId:     clientId,
+		Side:         side,
+	}
 }
