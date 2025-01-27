@@ -2,13 +2,13 @@ module tradethingqueryorder
 
 go 1.23.2
 
-replace github.com/non26/tradepkg => ../tradepkg
+// replace github.com/non26/tradepkg => ../tradepkg
 
 require (
 	github.com/aws/aws-lambda-go v1.47.0
 	github.com/awslabs/aws-lambda-go-api-proxy v0.16.2
 	github.com/labstack/echo/v4 v4.13.3
-	github.com/non26/tradepkg v0.1.17
+	github.com/non26/tradepkg v0.2.0
 	github.com/spf13/viper v1.19.0
 )
 
