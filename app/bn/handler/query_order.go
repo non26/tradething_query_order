@@ -24,8 +24,8 @@ func (q *QueryOrderHandler) Handler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	ctx := c.Request().Context()
-	res, err := q.service.QueryOrder(ctx, request.ToQueryOrder())
+
+	res, err := q.service.QueryOrder(c.Request().Context(), request.ToQueryOrder())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

@@ -14,6 +14,9 @@ import (
 )
 
 func (s *service) QueryOrder(ctx context.Context, request *servicerequest.QueryOrder) (handlerresponse.QueryOrderResponse, error) {
+	response := handlerresponse.QueryOrderResponse{
+		Data: []handlerresponse.QueryOrderResponseData{},
+	}
 	bnPositions, err := s.bnService.QueryPositionV3(ctx, request.ToBnServiceRequest())
 	if err != nil {
 		fmt.Println("error query position", err)
@@ -58,9 +61,14 @@ func (s *service) QueryOrder(ctx context.Context, request *servicerequest.QueryO
 				if err != nil {
 					fmt.Println("error insert new open order", err)
 				}
+
+				response.Data = append(response.Data, handlerresponse.QueryOrderResponseData{
+					Symbol:       position.Symbol,
+					PositionSide: position.PositionSide,
+				})
 			}
 
-			return handlerresponse.QueryOrderResponse{}, nil
+			return response, nil
 		}
 
 		mutaulKey, inBnNotDb, inDbNotBn := compareMapKey(bnPositions, dbPositions)
@@ -89,6 +97,10 @@ func (s *service) QueryOrder(ctx context.Context, request *servicerequest.QueryO
 					fmt.Println("error update open order", err)
 				}
 			}
+			response.Data = append(response.Data, handlerresponse.QueryOrderResponseData{
+				Symbol:       bnPosition.Symbol,
+				PositionSide: bnPosition.PositionSide,
+			})
 		}
 
 		for _, key := range inBnNotDb {
@@ -121,6 +133,10 @@ func (s *service) QueryOrder(ctx context.Context, request *servicerequest.QueryO
 			if err != nil {
 				fmt.Println("error insert new open order", err)
 			}
+			response.Data = append(response.Data, handlerresponse.QueryOrderResponseData{
+				Symbol:       bnPosition.Symbol,
+				PositionSide: bnPosition.PositionSide,
+			})
 		}
 
 		for _, key := range inDbNotBn {
@@ -135,11 +151,14 @@ func (s *service) QueryOrder(ctx context.Context, request *servicerequest.QueryO
 				Symbol:       dbPosition.Symbol,
 				PositionSide: dbPosition.PositionSide,
 			})
+			response.Data = append(response.Data, handlerresponse.QueryOrderResponseData{
+				Symbol:       dbPosition.Symbol,
+				PositionSide: dbPosition.PositionSide,
+			})
 		}
-
 	}
 
-	return handlerresponse.QueryOrderResponse{}, nil
+	return response, nil
 }
 
 func createDefaultClientId(symbol string, positionSide string, counting int) string {

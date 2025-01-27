@@ -1,10 +1,11 @@
 package bnresponse
 
-import dynamodbmodels "github.com/non26/tradepkg/pkg/bn/dynamodb_repository/models"
+import (
+	"fmt"
+	"strconv"
 
-// type PositionsInFormationResponse struct {
-// 	Positions []PositionInformation
-// }
+	dynamodbmodels "github.com/non26/tradepkg/pkg/bn/dynamodb_repository/models"
+)
 
 type PositionsInFormationResponse []PositionInformation
 
@@ -43,4 +44,12 @@ func (p *PositionInformation) ToOpenPositionDynamodb(clientId string, side strin
 		ClientId:     clientId,
 		Side:         side,
 	}
+}
+
+func (p *PositionInformation) GetUnSignedPositionAmt() string {
+	amt, _ := strconv.ParseFloat(p.PositionAmt, 64)
+	if amt < 0 {
+		return fmt.Sprintf("%v", amt*-1)
+	}
+	return p.PositionAmt
 }

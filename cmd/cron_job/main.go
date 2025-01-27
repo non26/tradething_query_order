@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 	"tradethingqueryorder/config"
 
 	svc "tradethingqueryorder/app/bn/service"
@@ -36,7 +37,7 @@ func ConJob() error {
 	dynamodbconfig := bndynamodb.NewDynamodbConfig()
 	dynamodbendpoint := bndynamodb.NewEndPointResolver(_config.Dynamodb.Region, _config.Dynamodb.Endpoint)
 	dynamodbcredential := bndynamodb.NewCredential(_config.Dynamodb.Ak, _config.Dynamodb.Sk)
-	dynamodbclient := bndynamodb.DynamoDB(dynamodbendpoint, dynamodbcredential, dynamodbconfig.LoadConfig()).NewLocal()
+	dynamodbclient := bndynamodb.DynamoDB(dynamodbendpoint, dynamodbcredential, dynamodbconfig.LoadConfig()).NewPrd()
 	svcrepository := bndynamodb.NewDynamoDBRepository(dynamodbclient)
 
 	httptransport := bntransport.NewBinanceTransport(&http.Transport{})
@@ -61,9 +62,18 @@ func ConJob() error {
 		bnsvc,
 	)
 	ctx := context.Background()
-	service.QueryOrder(ctx, &svcrequest.QueryOrder{
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	fmt.Println("start query bn position")
+	bnres, err := service.QueryOrder(ctx, &svcrequest.QueryOrder{
 		Symbol: "",
 	})
+	if err != nil {
+		fmt.Println("error query bn position", err)
+	} else {
+		fmt.Println("success query bn position", bnres)
+	}
+	fmt.Println("end query bn position")
 
 	return nil
 }
