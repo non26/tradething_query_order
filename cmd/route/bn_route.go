@@ -9,9 +9,9 @@ import (
 
 	bntradesvc "tradethingqueryorder/app/bn/bn_service"
 
-	bnclient "github.com/non26/tradepkg/pkg/bn/binance_client"
-	bntransport "github.com/non26/tradepkg/pkg/bn/binance_transport"
-	bndynamodb "github.com/non26/tradepkg/pkg/bn/dynamodb_repository"
+	bnclient "github.com/non26/tradepkg/pkg/bn/bn_client"
+	bntransport "github.com/non26/tradepkg/pkg/bn/bn_transport"
+	bndynamodb "github.com/non26/tradepkg/pkg/bn/dynamodb_future"
 
 	"github.com/labstack/echo/v4"
 )
@@ -23,8 +23,10 @@ func BnRoute(app_echo *echo.Echo, config *config.Config) {
 	dynamodbconfig := bndynamodb.NewDynamodbConfig()
 	dynamodbendpoint := bndynamodb.NewEndPointResolver(config.Dynamodb.Region, config.Dynamodb.Endpoint)
 	dynamodbcredential := bndynamodb.NewCredential(config.Dynamodb.Ak, config.Dynamodb.Sk)
-	dynamodbclient := bndynamodb.DynamoDB(dynamodbendpoint, dynamodbcredential, dynamodbconfig.LoadConfig()).NewPrd()
-	svcrepository := bndynamodb.NewDynamoDBRepository(dynamodbclient)
+	dynamodbclient := bndynamodb.DynamoDB(dynamodbendpoint, dynamodbcredential, dynamodbconfig.LoadConfig()).NewLocal()
+	bnFtOpeningPositionTable := bndynamodb.NewConnectionBnFtOpeningPositionRepository(dynamodbclient)
+	bnFtQouteUsdtTable := bndynamodb.NewConnectionBnFtQouteUSDTRepository(dynamodbclient)
+	bnFtHistoryTable := bndynamodb.NewConnectionBnFtHistoryRepository(dynamodbclient)
 
 	httptransport := bntransport.NewBinanceTransport(&http.Transport{})
 	httpclient := bnclient.NewBinanceSerivceHttpClient()
@@ -44,7 +46,9 @@ func BnRoute(app_echo *echo.Echo, config *config.Config) {
 		config.BnCredentials.SecretKey,
 		config.BnCredentials.APIKey,
 		config.BnCredentials.SecretKey,
-		svcrepository,
+		bnFtOpeningPositionTable,
+		bnFtQouteUsdtTable,
+		bnFtHistoryTable,
 		bnsvc,
 	)
 

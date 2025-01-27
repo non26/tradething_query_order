@@ -16,9 +16,9 @@ import (
 
 	svcrequest "tradethingqueryorder/app/bn/service_request"
 
-	bnclient "github.com/non26/tradepkg/pkg/bn/binance_client"
-	bntransport "github.com/non26/tradepkg/pkg/bn/binance_transport"
-	bndynamodb "github.com/non26/tradepkg/pkg/bn/dynamodb_repository"
+	bnclient "github.com/non26/tradepkg/pkg/bn/bn_client"
+	bntransport "github.com/non26/tradepkg/pkg/bn/bn_transport"
+	bndynamodb "github.com/non26/tradepkg/pkg/bn/dynamodb_future"
 )
 
 var echoLambda *echoadapter.EchoLambda
@@ -37,8 +37,10 @@ func ConJob() error {
 	dynamodbconfig := bndynamodb.NewDynamodbConfig()
 	dynamodbendpoint := bndynamodb.NewEndPointResolver(_config.Dynamodb.Region, _config.Dynamodb.Endpoint)
 	dynamodbcredential := bndynamodb.NewCredential(_config.Dynamodb.Ak, _config.Dynamodb.Sk)
-	dynamodbclient := bndynamodb.DynamoDB(dynamodbendpoint, dynamodbcredential, dynamodbconfig.LoadConfig()).NewPrd()
-	svcrepository := bndynamodb.NewDynamoDBRepository(dynamodbclient)
+	dynamodbclient := bndynamodb.DynamoDB(dynamodbendpoint, dynamodbcredential, dynamodbconfig.LoadConfig()).NewLocal()
+	bnFtOpeningPositionTable := bndynamodb.NewConnectionBnFtOpeningPositionRepository(dynamodbclient)
+	bnFtQouteUsdtTable := bndynamodb.NewConnectionBnFtQouteUSDTRepository(dynamodbclient)
+	bnFtHistoryTable := bndynamodb.NewConnectionBnFtHistoryRepository(dynamodbclient)
 
 	httptransport := bntransport.NewBinanceTransport(&http.Transport{})
 	httpclient := bnclient.NewBinanceSerivceHttpClient()
@@ -58,7 +60,9 @@ func ConJob() error {
 		_config.BnCredentials.SecretKey,
 		_config.BnCredentials.APIKey,
 		_config.BnCredentials.SecretKey,
-		svcrepository,
+		bnFtOpeningPositionTable,
+		bnFtQouteUsdtTable,
+		bnFtHistoryTable,
 		bnsvc,
 	)
 	ctx := context.Background()

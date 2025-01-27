@@ -3,14 +3,15 @@ package service
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	handlerresponse "tradethingqueryorder/app/bn/handler_response"
 	servicerequest "tradethingqueryorder/app/bn/service_request"
 
-	dynamodbrepository "github.com/non26/tradepkg/pkg/bn/dynamodb_repository/models"
-	positionconstant "github.com/non26/tradepkg/pkg/bn/position_constant"
+	bnconstant "github.com/non26/tradepkg/pkg/bn/bn_constant"
+	dynamodbrepository "github.com/non26/tradepkg/pkg/bn/dynamodb_future/models"
+	"github.com/non26/tradepkg/pkg/bn/utils"
+	"github.com/shopspring/decimal"
 )
 
 func (s *service) QueryOrder(ctx context.Context, request *servicerequest.QueryOrder) (handlerresponse.QueryOrderResponse, error) {
@@ -23,7 +24,7 @@ func (s *service) QueryOrder(ctx context.Context, request *servicerequest.QueryO
 		return handlerresponse.QueryOrderResponse{}, err
 	}
 
-	dbPositions, err := s.repository.GetAllOpenOrders(ctx)
+	dbPositions, err := s.bnFtOpeningPositionTable.GetAll(ctx)
 	if err != nil {
 		fmt.Println("error get all open orders", err)
 		return handlerresponse.QueryOrderResponse{}, err
@@ -32,32 +33,32 @@ func (s *service) QueryOrder(ctx context.Context, request *servicerequest.QueryO
 		// found position in Binance but not position in DynamoDB then create new position
 		if len(dbPositions) == 0 && len(bnPositions) > 0 {
 			for _, position := range bnPositions {
-				qoute, err := s.repository.GetQouteUSDT(ctx, position.Symbol)
+				qoute, err := s.bnFtQouteUsdtTable.Get(ctx, position.Symbol)
 				if !qoute.IsFound() || err != nil {
 					qoute.SetSymbol(position.Symbol)
-					if position.PositionSide == positionconstant.LONG {
+					if utils.IsLongPosition(position.PositionSide) {
 						qoute.SetCountingLong(1)
 						qoute.SetCountingShort(0)
 					} else {
 						qoute.SetCountingLong(0)
 						qoute.SetCountingShort(1)
 					}
-					err = s.repository.InsertNewSymbolQouteUSDT(ctx, qoute)
+					err = s.bnFtQouteUsdtTable.Insert(ctx, qoute)
 					if err != nil {
 						fmt.Println("error insert new symbol qoute usdt", err)
 					}
 				}
 				var side string
 				var clientId string
-				if position.PositionSide == positionconstant.LONG {
-					side = positionconstant.BUY
+				if utils.IsLongPosition(position.PositionSide) {
+					side = bnconstant.BUY
 					clientId = createDefaultClientId(position.Symbol, position.PositionSide, qoute.CountingLong)
 				} else {
-					side = positionconstant.SELL
+					side = bnconstant.SELL
 					clientId = createDefaultClientId(position.Symbol, position.PositionSide, qoute.CountingShort)
 				}
 
-				err = s.repository.InsertNewOpenOrder(ctx, position.ToOpenPositionDynamodb(clientId, side))
+				err = s.bnFtOpeningPositionTable.Insert(ctx, position.ToOpenPositionDynamodb(clientId, side))
 				if err != nil {
 					fmt.Println("error insert new open order", err)
 				}
@@ -71,6 +72,7 @@ func (s *service) QueryOrder(ctx context.Context, request *servicerequest.QueryO
 			return response, nil
 		}
 
+		// found position in Binance and position in DynamoDB then update position
 		mutaulKey, inBnNotDb, inDbNotBn := compareMapKey(bnPositions, dbPositions)
 		for _, key := range mutaulKey {
 			need_update := false
@@ -85,14 +87,14 @@ func (s *service) QueryOrder(ctx context.Context, request *servicerequest.QueryO
 				need_update = true
 			}
 
-			dbAmountq, _ := strconv.ParseFloat(dbPosition.AmountQ, 64)
-			bnAmountq, _ := strconv.ParseFloat(bnPosition.PositionAmt, 64)
-			if dbAmountq != bnAmountq {
-				dbPosition.AmountQ = bnPosition.PositionAmt
+			dbAmountq, _ := decimal.NewFromString(dbPosition.AmountB)
+			bnAmountq, _ := decimal.NewFromString(bnPosition.PositionAmt)
+			if dbAmountq.Cmp(bnAmountq) != 0 {
+				dbPosition.AmountB = bnPosition.PositionAmt
 				need_update = true
 			}
 			if need_update {
-				err = s.repository.UpdateOpenOrder(ctx, dbPosition)
+				err = s.bnFtOpeningPositionTable.UpdateAmountB(ctx, dbPosition)
 				if err != nil {
 					fmt.Println("error update open order", err)
 				}
@@ -103,33 +105,34 @@ func (s *service) QueryOrder(ctx context.Context, request *servicerequest.QueryO
 			})
 		}
 
+		// found position in Binance but not position in DynamoDB then create new position in db
 		for _, key := range inBnNotDb {
 			bnPosition := bnPositions[key]
-			qoute, err := s.repository.GetQouteUSDT(ctx, bnPosition.Symbol)
+			qoute, err := s.bnFtQouteUsdtTable.Get(ctx, bnPosition.Symbol)
 			if !qoute.IsFound() || err != nil {
 				qoute.SetSymbol(bnPosition.Symbol)
-				if bnPosition.PositionSide == positionconstant.LONG {
+				if bnPosition.PositionSide == bnconstant.LONG {
 					qoute.SetCountingLong(1)
 					qoute.SetCountingShort(0)
 				} else {
 					qoute.SetCountingLong(0)
 					qoute.SetCountingShort(1)
 				}
-				err = s.repository.InsertNewSymbolQouteUSDT(ctx, qoute)
+				err = s.bnFtQouteUsdtTable.Insert(ctx, qoute)
 				if err != nil {
 					fmt.Println("error insert new symbol qoute usdt", err)
 				}
 			}
 			var side string
 			var clientId string
-			if bnPosition.PositionSide == positionconstant.LONG {
-				side = positionconstant.BUY
+			if bnPosition.PositionSide == bnconstant.LONG {
+				side = bnconstant.BUY
 				clientId = createDefaultClientId(bnPosition.Symbol, bnPosition.PositionSide, qoute.CountingLong)
 			} else {
-				side = positionconstant.SELL
+				side = bnconstant.SELL
 				clientId = createDefaultClientId(bnPosition.Symbol, bnPosition.PositionSide, qoute.CountingShort)
 			}
-			err = s.repository.InsertNewOpenOrder(ctx, bnPosition.ToOpenPositionDynamodb(clientId, side))
+			err = s.bnFtOpeningPositionTable.Insert(ctx, bnPosition.ToOpenPositionDynamodb(clientId, side))
 			if err != nil {
 				fmt.Println("error insert new open order", err)
 			}
@@ -139,14 +142,15 @@ func (s *service) QueryOrder(ctx context.Context, request *servicerequest.QueryO
 			})
 		}
 
+		// found position in DynamoDB but not position in Binance then delete position
 		for _, key := range inDbNotBn {
 			dbPosition := dbPositions[key]
-			err = s.repository.DeleteOpenOrderBySymbolAndPositionSide(ctx, dbPosition)
+			err = s.bnFtOpeningPositionTable.Delete(ctx, dbPosition)
 			if err != nil {
 				fmt.Println("error delete open order", err)
 			}
 
-			s.repository.InsertHistory(ctx, &dynamodbrepository.BnFtHistory{
+			s.bnFtHistoryTable.Insert(ctx, &dynamodbrepository.BnFtHistory{
 				ClientId:     dbPosition.ClientId,
 				Symbol:       dbPosition.Symbol,
 				PositionSide: dbPosition.PositionSide,

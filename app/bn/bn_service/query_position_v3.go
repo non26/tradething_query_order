@@ -7,10 +7,10 @@ import (
 	bntradereq "tradethingqueryorder/app/bn/bn_request"
 	bntraderes "tradethingqueryorder/app/bn/bn_response"
 
-	bnrequest "github.com/non26/tradepkg/pkg/bn/binance_request"
-	bnresponse "github.com/non26/tradepkg/pkg/bn/binance_response"
+	bnrequest "github.com/non26/tradepkg/pkg/bn/bn_request"
+	bnresponse "github.com/non26/tradepkg/pkg/bn/bn_response"
 
-	bncaller "github.com/non26/tradepkg/pkg/bn/binance_caller"
+	bncaller "github.com/non26/tradepkg/pkg/bn/bn_caller"
 )
 
 func (b *binanceFutureTradeService) QueryPositionV3(
@@ -44,17 +44,4 @@ func (b *binanceFutureTradeService) QueryPositionV3(
 		}
 	}
 	return positionMap, nil
-
-	// bnsign := sign.NewSignHMACSHA256[bntradereq.PositionInformationRequest]("", b.secretKey)
-	// signature, err := bnsign.GetQueryStringBinanceSignature(request)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// httpreq, err := http.NewRequest(http.MethodGet, b.bnPositionUrl, nil)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// httpreq.Header.Set("X-MBX-APIKEY", b.apiKey)
-	// httpreq.Header.Set("Content-Type", "application/json")
-
 }

@@ -7,7 +7,7 @@ import (
 
 	bnservice "tradethingqueryorder/app/bn/bn_service"
 
-	dynamodbrepository "github.com/non26/tradepkg/pkg/bn/dynamodb_repository"
+	bndynamodb "github.com/non26/tradepkg/pkg/bn/dynamodb_future"
 )
 
 type IService interface {
@@ -15,12 +15,14 @@ type IService interface {
 }
 
 type service struct {
-	bn_api_key      string
-	bn_secret_key   string
-	bn_position_url string
-	base_url        string
-	repository      dynamodbrepository.IRepository
-	bnService       bnservice.IBinanceFutureTradeService
+	bn_api_key               string
+	bn_secret_key            string
+	bn_position_url          string
+	base_url                 string
+	bnFtOpeningPositionTable bndynamodb.IBnFtOpeningPositionRepository
+	bnFtQouteUsdtTable       bndynamodb.IBnFtQouteUSDTRepository
+	bnFtHistoryTable         bndynamodb.IBnFtHistoryRepository
+	bnService                bnservice.IBinanceFutureTradeService
 }
 
 func NewService(
@@ -28,15 +30,19 @@ func NewService(
 	bn_secret_key string,
 	bn_position_url string,
 	base_url string,
-	repository dynamodbrepository.IRepository,
+	bnFtOpeningPositionTable bndynamodb.IBnFtOpeningPositionRepository,
+	bnFtQouteUsdtTable bndynamodb.IBnFtQouteUSDTRepository,
+	bnFtHistoryTable bndynamodb.IBnFtHistoryRepository,
 	bnService bnservice.IBinanceFutureTradeService,
 ) IService {
 	return &service{
-		bn_api_key:      bn_api_key,
-		bn_secret_key:   bn_secret_key,
-		bn_position_url: bn_position_url,
-		base_url:        base_url,
-		repository:      repository,
-		bnService:       bnService,
+		bn_api_key:               bn_api_key,
+		bn_secret_key:            bn_secret_key,
+		bn_position_url:          bn_position_url,
+		base_url:                 base_url,
+		bnFtOpeningPositionTable: bnFtOpeningPositionTable,
+		bnFtQouteUsdtTable:       bnFtQouteUsdtTable,
+		bnFtHistoryTable:         bnFtHistoryTable,
+		bnService:                bnService,
 	}
 }

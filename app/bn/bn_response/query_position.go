@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	dynamodbmodels "github.com/non26/tradepkg/pkg/bn/dynamodb_repository/models"
+	dynamodbmodels "github.com/non26/tradepkg/pkg/bn/dynamodb_future/models"
 )
 
 type PositionsInFormationResponse []PositionInformation
@@ -40,7 +40,7 @@ func (p *PositionInformation) ToOpenPositionDynamodb(clientId string, side strin
 	return &dynamodbmodels.BnFtOpeningPosition{
 		Symbol:       p.Symbol,
 		PositionSide: p.PositionSide,
-		AmountQ:      p.PositionAmt,
+		AmountB:      p.PositionAmt,
 		ClientId:     clientId,
 		Side:         side,
 	}
